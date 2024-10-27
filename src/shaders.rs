@@ -46,6 +46,7 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
 
 pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, current_shader: u8) -> Color {
   match current_shader {
+      0 => neon_wave_shader(fragment, uniforms),
       1 => black_and_white(fragment, uniforms),
       2 => dalmata_shader(fragment, uniforms),
       3 => cloud_shader(fragment, uniforms),
@@ -55,54 +56,73 @@ pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, current_shader:
       7 => rock_shader(fragment, uniforms),
       8 => rainforest_shader(fragment, uniforms),
       9 => clay_shader(fragment, uniforms),
-      _ => lava_shader(fragment, uniforms), // Shader por defecto si se selecciona un número no válido
+      _ => lava_shader(fragment, uniforms),
   }
 }
 
 
 
 fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    let seed = uniforms.time as f32 * fragment.vertex_position.y * fragment.vertex_position.x;
-  
-    let mut rng = StdRng::seed_from_u64(seed.abs() as u64);
-  
-    let random_number = rng.gen_range(0..=100);
-  
-    let black_or_white = if random_number < 50 {
-      Color::new(0, 0, 0)
+    let color_1 = Color::new(255, 0, 255); 
+    let color_2 = Color::new(0, 255, 255); 
+    let color_3 = Color::new(0, 255, 127);
+    let color_4 = Color::new(255, 105, 180); 
+    let color_5 = Color::new(255, 165, 0);  
+
+    let position = fragment.vertex_position;
+
+    let t = uniforms.time as f32 * 0.04; 
+    let swirl = (position.x * 10.0 + position.y * 10.0 + t).sin(); 
+
+    let noise_zoom = 7.0;
+    let noise_value = uniforms.noise.get_noise_3d(
+        position.x * noise_zoom,
+        position.y * noise_zoom,
+        position.z * noise_zoom + t,
+    ).abs(); 
+
+    let wave_value = (position.y * 12.0 + swirl * 5.0).sin();
+
+    let threshold_1 = -0.6;
+    let threshold_2 = -0.2;
+    let threshold_3 = 0.2;
+    let threshold_4 = 0.6;
+
+    let base_color = if wave_value < threshold_1 {
+        color_1.lerp(&color_2, noise_value)
+    } else if wave_value < threshold_2 {
+        color_2.lerp(&color_3, noise_value)
+    } else if wave_value < threshold_3 {
+        color_3.lerp(&color_4, noise_value)
+    } else if wave_value < threshold_4 {
+        color_4.lerp(&color_5, noise_value)
     } else {
-      Color::new(255, 255, 255)
+        color_5.lerp(&color_1, noise_value)
     };
-  
-    black_or_white * fragment.intensity
+
+    base_color * fragment.intensity
 }
   
 fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    // Colores base para las bandas con tonalidades cálidas
-  let color_1 = Color::new(255, 204, 102); // Amarillo claro
-  let color_2 = Color::new(255, 153, 51);  // Naranja
-  let color_3 = Color::new(204, 102, 0);   // Naranja oscuro
-  let color_4 = Color::new(153, 76, 0);    // Marrón claro
-  let color_5 = Color::new(102, 51, 0);    // Marrón oscuro
+  let color_1 = Color::new(255, 204, 102); 
+  let color_2 = Color::new(255, 153, 51);  
+  let color_3 = Color::new(204, 102, 0);  
+  let color_4 = Color::new(153, 76, 0);   
+  let color_5 = Color::new(102, 51, 0);  
 
-  // Obtener la posición del fragmento
   let position = fragment.vertex_position;
 
-  // Ajuste del tiempo para el desplazamiento
-  let t = uniforms.time as f32 * 0.02; // Controla la velocidad del movimiento
-  let pulsate = (t * 0.5).sin() * 0.5; // Movimiento suave para las bandas
+  let t = uniforms.time as f32 * 0.02; 
+  let pulsate = (t * 0.5).sin() * 0.5; 
 
-  // Ajuste de la función para generar bandas horizontales
-  let zoom = 10.0; // Ajuste para controlar la cantidad de bandas
-  let bands_value = ((position.y * zoom) + pulsate).sin(); // Bandas a lo largo del eje *y*
+  let zoom = 10.0; 
+  let bands_value = ((position.y * zoom) + pulsate).sin(); 
 
-  // Definir diferentes umbrales para los colores de las bandas
   let threshold_1 = -0.8;
   let threshold_2 = -0.4;
   let threshold_3 = 0.0;
   let threshold_4 = 0.4;
 
-  // Asignar colores basados en el valor de las bandas
   let base_color = if bands_value < threshold_1 {
       color_1
   } else if bands_value < threshold_2 {
@@ -115,33 +135,27 @@ fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
       color_5
   };
 
-  // Ajustar la intensidad para simular efectos de iluminación
   base_color * fragment.intensity
 }
   
 fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    // Colores base para las bandas con tonalidades de azul, aqua y celeste
-    let color_1 = Color::new(173, 216, 230); // Azul cielo claro
-    let color_2 = Color::new(135, 206, 250); // Azul cielo
-    let color_3 = Color::new(0, 191, 255);   // Azul profundo
-    let color_4 = Color::new(64, 224, 208);  // Turquesa
-    let color_5 = Color::new(0, 206, 209);   // Aqua oscuro
-    let color_6 = Color::new(70, 130, 180);  // Azul acero
-    let color_7 = Color::new(0, 105, 148);   // Azul océano
-    let color_8 = Color::new(25, 25, 112);   // Azul medianoche
+    let color_1 = Color::new(173, 216, 230); 
+    let color_2 = Color::new(135, 206, 250);
+    let color_3 = Color::new(0, 191, 255); 
+    let color_4 = Color::new(64, 224, 208); 
+    let color_5 = Color::new(0, 206, 209);   
+    let color_6 = Color::new(70, 130, 180); 
+    let color_7 = Color::new(0, 105, 148); 
+    let color_8 = Color::new(25, 25, 112);   
 
-    // Obtener la posición del fragmento
     let position = fragment.vertex_position;
 
-    // Ajuste del tiempo para el desplazamiento
-    let t = uniforms.time as f32 * 0.02; // Controla la velocidad del movimiento
-    let pulsate = (t * 0.5).sin() * 0.5; // Movimiento suave para las bandas
+    let t = uniforms.time as f32 * 0.02;
+    let pulsate = (t * 0.5).sin() * 0.5; 
 
-    // Ajuste de la función para generar bandas horizontales
-    let zoom = 15.0; // Ajuste para controlar la cantidad de bandas
-    let bands_value = ((position.y * zoom) + pulsate).sin(); // Bandas a lo largo del eje *y*
+    let zoom = 15.0; 
+    let bands_value = ((position.y * zoom) + pulsate).sin(); 
 
-    // Definir diferentes umbrales para los colores de las bandas
     let threshold_1 = -0.8;
     let threshold_2 = -0.6;
     let threshold_3 = -0.4;
@@ -170,38 +184,31 @@ fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
         color_8
     };
 
-    // Ajustar la intensidad para simular efectos de iluminación
     base_color * fragment.intensity
 }
   
 fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // Colores base para los anillos
-  let ring_color_1 = Color::new(85, 107, 47);   // Verde oliva oscuro
-  let ring_color_2 = Color::new(124, 252, 0);   // Verde claro
-  let ring_color_3 = Color::new(34, 139, 34);   // Verde bosque
-  let ring_color_4 = Color::new(173, 255, 47);  // Verde amarillento
+  let ring_color_1 = Color::new(85, 107, 47);   
+  let ring_color_2 = Color::new(124, 252, 0);  
+  let ring_color_3 = Color::new(34, 139, 34);   
+  let ring_color_4 = Color::new(173, 255, 47);  
 
-  // Obtener la posición del fragmento
   let position = fragment.vertex_position;
 
-  // Ajuste del tiempo para el desplazamiento
-  let t = uniforms.time as f32 * 0.03; // Incrementar el tiempo para un movimiento más rápido
-  let pulsate = (t * 0.5).sin() * 0.2; // Movimiento más notable
+  let t = uniforms.time as f32 * 0.03; 
+  let pulsate = (t * 0.5).sin() * 0.2; 
 
-  // Ajuste de ruido para generar los anillos en el eje deseado con más cantidad
-  let zoom = 600.0; // Mayor zoom para generar más anillos en el área
+  let zoom = 600.0; 
   let noise_value = uniforms.noise.get_noise_2d(
-      (position.x + pulsate) * zoom, // Cambiar el eje a *x* para alinear los anillos en el eje x
-      position.z * zoom + t,         // Usar *z* para el movimiento y variación en el otro eje
+      (position.x + pulsate) * zoom, 
+      position.z * zoom + t,         
   ).abs();
 
-  // Definir diferentes umbrales para los colores de los anillos
   let ring_threshold_1 = 0.1;
   let ring_threshold_2 = 0.3;
   let ring_threshold_3 = 0.5;
   let ring_threshold_4 = 0.7;
 
-  // Determinación del color basado en el valor de ruido
   let ring_color = if noise_value < ring_threshold_1 {
       ring_color_1
   } else if noise_value < ring_threshold_2 {
@@ -212,75 +219,78 @@ fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
       ring_color_4
   };
 
-  // Ajustar la intensidad para simular efectos de iluminación y variaciones
   ring_color * fragment.intensity
 }
 
   
 fn lava_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    // Base colors for the lava effect
-    let bright_color = Color::new(255, 240, 0); // Bright orange (lava-like)
-    let dark_color = Color::new(130, 20, 0);   // Darker red-orange
-  
-    // Get fragment position
-    let position = Vec3::new(
-      fragment.vertex_position.x,
-      fragment.vertex_position.y,
-      fragment.depth
-    );
-  
-    // Base frequency and amplitude for the pulsating effect
-    let base_frequency = 0.2;
-    let pulsate_amplitude = 0.5;
-    let t = uniforms.time as f32 * 0.01;
-  
-    // Pulsate on the z-axis to change spot size
-    let pulsate = (t * base_frequency).sin() * pulsate_amplitude;
-  
-    // Apply noise to coordinates with subtle pulsating on z-axis
-    let zoom = 1000.0; // Constant zoom factor
-    let noise_value1 = uniforms.noise.get_noise_3d(
-      position.x * zoom,
-      position.y * zoom,
-      (position.z + pulsate) * zoom
-    );
-    let noise_value2 = uniforms.noise.get_noise_3d(
-      (position.x + 1000.0) * zoom,
-      (position.y + 1000.0) * zoom,
-      (position.z + 1000.0 + pulsate) * zoom
-    );
-    let noise_value = (noise_value1 + noise_value2) * 0.5;  // Averaging noise for smoother transitions
-  
-    // Use lerp for color blending based on noise value
-    let color = dark_color.lerp(&bright_color, noise_value);
-  
-    color * fragment.intensity
+    let spot_color = Color::new(139, 69, 19);  
+    let rock_base_color = Color::new(210, 105, 30); 
+    let highlight_color = Color::new(255, 140, 0); 
+    let dot_color = Color::new(255, 222, 173); 
+
+    let position = fragment.vertex_position;
+
+    let t = uniforms.time as f32 * 0.03;
+    let pulsate = (t * 0.6).sin() * 0.5 + 0.5; 
+
+    let rock_zoom = 15.0; 
+    let rock_noise_value = uniforms.noise.get_noise_3d(
+        position.x * rock_zoom,
+        position.y * rock_zoom,
+        position.z * rock_zoom,
+    ).abs();
+
+    let spot_zoom = 15.0; 
+    let spot_noise_value = uniforms.noise.get_noise_2d(
+        position.x * spot_zoom,
+        position.y * spot_zoom,
+    ).abs(); 
+
+    let spot_threshold = 0.2 * pulsate; 
+
+    let dots_zoom = 50.0;
+    let dots_noise_value = uniforms.noise.get_noise_2d(
+        position.x * dots_zoom,
+        position.y * dots_zoom,
+    ).abs(); 
+
+    let dots_threshold = 0.05; 
+
+    let base_color = if spot_noise_value < spot_threshold {
+        spot_color.lerp(&rock_base_color, rock_noise_value)
+    } else {
+        rock_base_color.lerp(&highlight_color, rock_noise_value)
+    };
+ 
+    let final_color = if dots_noise_value < dots_threshold {
+        dot_color  
+    } else {
+        base_color  
+    };
+ 
+    final_color * fragment.intensity
 }
 
 
 fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // Colores base para el efecto solar
-  let core_color = Color::new(255, 255, 200); // Amarillo muy claro (casi blanco)
-  let mid_color = Color::new(255, 223, 0);   // Amarillo dorado (más cercano al núcleo)
-  let corona_color = Color::new(255, 140, 0); // Naranja suave para la corona externa
-
-  // Obtener la posición del fragmento
+  let core_color = Color::new(255, 255, 200);  
+  let mid_color = Color::new(255, 223, 0);    
+  let corona_color = Color::new(255, 140, 0);  
+ 
   let position = Vec3::new(
       fragment.vertex_position.x,
       fragment.vertex_position.y,
       fragment.depth,
   );
-
-  // Frecuencia y amplitud base para el efecto de pulsación
-  let base_frequency = 0.5; // Frecuencia ajustada para un movimiento más dinámico
-  let pulsate_amplitude = 0.6; // Amplitud ajustada para un efecto de movimiento más notable
-  let t = uniforms.time as f32 * 0.02; // Velocidad de la animación incrementada
-
-  // Efecto de pulsación para variar el ruido a lo largo del tiempo
+ 
+  let base_frequency = 0.5;  
+  let pulsate_amplitude = 0.6;  
+  let t = uniforms.time as f32 * 0.02;  
+ 
   let pulsate = (t * base_frequency).sin() * pulsate_amplitude;
 
-  // Aplicar ruido a las coordenadas con una pulsación más visible
-  let zoom = 1000.0; // Conservamos el zoom del diseño original para mantener el detalle fino
+  let zoom = 1000.0;  
   let noise_value1 = uniforms.noise.get_noise_3d(
       position.x * zoom,
       position.y * zoom,
@@ -291,61 +301,53 @@ fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
       (position.y + 1000.0) * zoom,
       (position.z + 1000.0 + pulsate) * zoom,
   );
-  let noise_value = (noise_value1 + noise_value2) * 0.5;  // Promediar el ruido para transiciones suaves
-
-  // Interpolación de colores: del centro brillante al borde naranja suave
+  let noise_value = (noise_value1 + noise_value2) * 0.5;  
+ 
   let blended_color = core_color
       .lerp(&mid_color, noise_value.abs())
       .lerp(&corona_color, (noise_value * 0.5 + 0.5).clamp(0.0, 1.0));
-
-  // Ajustar la intensidad para simular efectos de iluminación
+ 
   blended_color * fragment.intensity
 }
 
 fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // Colores base para la textura rocosa con tonalidades beige
-  let color_1 = Color::new(245, 222, 179); // Beige muy claro (blanco arena)
-  let color_2 = Color::new(222, 184, 135); // Beige claro (arena)
-  let color_3 = Color::new(210, 180, 140); // Beige medio-claro (arena clara)
-  let color_4 = Color::new(188, 143, 143); // Beige medio (rosado suave)
-  let color_5 = Color::new(205, 133, 63);  // Beige medio-oscuro (tierra clara)
-  let color_6 = Color::new(139, 69, 19);   // Marrón claro (madera)
-  let color_7 = Color::new(160, 82, 45);   // Marrón rojizo (tierra más oscura)
-
-  // Obtener la posición del fragmento
+  let color_1 = Color::new(245, 222, 179);  
+  let color_2 = Color::new(222, 184, 135);  
+  let color_3 = Color::new(210, 180, 140);  
+  let color_4 = Color::new(188, 143, 143);  
+  let color_5 = Color::new(205, 133, 63);   
+  let color_6 = Color::new(139, 69, 19);   
+  let color_7 = Color::new(160, 82, 45);   
+ 
   let position = Vec3::new(
       fragment.vertex_position.x,
       fragment.vertex_position.y,
       fragment.depth,
   );
-
-  // Ajuste del tiempo para el desplazamiento
-  let t = uniforms.time as f32 * 0.01; // Controla la velocidad del movimiento
-  let pulsate = (t * 0.5).sin() * 0.1; // Movimiento suave para simular el flujo
-
-  // Ajuste de ruido para generar la textura rocosa con movimiento
-  let zoom = 1000.0; // Aumentar el zoom para obtener más detalles y muchas piedras pequeñas
+ 
+  let t = uniforms.time as f32 * 0.01; 
+  let pulsate = (t * 0.5).sin() * 0.1;  
+ 
+  let zoom = 1000.0;  
   let noise_value1 = uniforms.noise.get_noise_3d(
       (position.x + pulsate) * zoom,
       (position.y + pulsate) * zoom,
-      position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
+      position.z * zoom + t,  
   );
   let noise_value2 = uniforms.noise.get_noise_3d(
       (position.x + 1000.0 + pulsate) * zoom,
       (position.y + 1000.0 + pulsate) * zoom,
-      position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
+      position.z * zoom + t, 
   );
-  let noise_value = (noise_value1 + noise_value2) * 0.5;  // Promediar el ruido para transiciones suaves
+  let noise_value = (noise_value1 + noise_value2) * 0.5; 
 
-  // Umbrales para definir las áreas de "piedras" y "grietas"
   let stone_threshold_1 = -0.4;
   let stone_threshold_2 = -0.2;
   let stone_threshold_3 = 0.0;
   let stone_threshold_4 = 0.2;
   let stone_threshold_5 = 0.4;
   let stone_threshold_6 = 0.6;
-
-  // Determinación del color basado en el valor de ruido
+ 
   let base_color = if noise_value > stone_threshold_6 {
       color_1
   } else if noise_value > stone_threshold_5 {
@@ -361,12 +363,10 @@ fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   } else {
       color_7
   };
-
-  // Simulación de relieve usando la normal del fragmento y una dirección de luz
-  let light_dir = Vec3::new(1.0, 1.0, 0.5).normalize(); // Dirección de la luz ajustada para mayor contraste
+ 
+  let light_dir = Vec3::new(1.0, 1.0, 0.5).normalize(); 
   let diffuse_intensity = dot(&light_dir, &fragment.normal).max(0.0);
-
-  // Ajuste de color basado en la intensidad difusa para dar efecto de relieve
+ 
   let final_color = base_color * (0.6 + 0.4 * diffuse_intensity);
 
   final_color * fragment.intensity
@@ -374,91 +374,77 @@ fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 
 
 fn rainforest_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // Colores base para la textura de niebla o nubes densas
-  let cloud_color = Color::new(255, 255, 255); // Blanco brillante para las áreas densas
-  let fog_color = Color::new(120, 120, 120);   // Gris para las áreas más tenues
+  let cloud_color = Color::new(255, 255, 255);  
+  let fog_color = Color::new(120, 120, 120);   
 
-  // Obtener la posición del fragmento
   let position = Vec3::new(
       fragment.vertex_position.x,
       fragment.vertex_position.y,
       fragment.depth,
   );
 
-  // Ajuste del tiempo para el desplazamiento
-  let t = uniforms.time as f32 * 0.01; // Controla la velocidad del movimiento
-  let pulsate = (t * 0.3).sin() * 0.5; // Movimiento suave y sutil para simular el flujo de la niebla
+  let t = uniforms.time as f32 * 0.01; 
+  let pulsate = (t * 0.3).sin() * 0.5; 
 
-  // Ajuste de ruido para generar la textura de niebla con movimiento
-  let zoom = 200.0; // Ajuste del zoom para una textura de nubes más detallada
+  let zoom = 200.0; 
   let noise_value1 = uniforms.noise.get_noise_3d(
       (position.x + pulsate) * zoom,
       (position.y + pulsate) * zoom,
-      position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
+      position.z * zoom + t, 
   );
   let noise_value2 = uniforms.noise.get_noise_3d(
       (position.x - pulsate) * zoom,
       (position.y - pulsate) * zoom,
-      position.z * zoom - t, // Desplazamiento en el tiempo para el movimiento
+      position.z * zoom - t, 
   );
-  let noise_value = (noise_value1 + noise_value2) * 0.5; // Promediar el ruido para un efecto más suave
+  let noise_value = (noise_value1 + noise_value2) * 0.5; 
 
-  // Crear un gradiente para dar densidad a la textura de las nubes
-  let gradient = (1.0 - position.y.abs()).clamp(0.0, 1.0); // Mayor densidad en el centro, desvaneciéndose hacia los bordes
+  let gradient = (1.0 - position.y.abs()).clamp(0.0, 1.0); 
 
-  // Mezclar el color de la nube con el de la niebla usando el valor de ruido y el gradiente
   let final_color = cloud_color
       .lerp(&fog_color, noise_value.abs())
       .lerp(&fog_color, 1.0 - gradient);
 
-  // Ajustar la intensidad para simular la transparencia de la niebla
   final_color * fragment.intensity
 }
 
 
 fn clay_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // Colores base para la textura con tonalidades azules y celestes
-  let color_1 = Color::new(173, 216, 230); // Celeste muy claro
-  let color_2 = Color::new(135, 206, 250); // Azul cielo claro
-  let color_3 = Color::new(70, 130, 180);  // Azul intermedio (azul acero)
-  let color_4 = Color::new(30, 144, 255);  // Azul más intenso (azul denso)
-  let color_5 = Color::new(0, 105, 148);   // Azul oscuro
+  let color_1 = Color::new(173, 216, 230); 
+  let color_2 = Color::new(135, 206, 250);
+  let color_3 = Color::new(70, 130, 180);  
+  let color_4 = Color::new(30, 144, 255);  
+  let color_5 = Color::new(0, 105, 148);   
 
-  // Obtener la posición del fragmento
   let position = Vec3::new(
       fragment.vertex_position.x,
       fragment.vertex_position.y,
       fragment.depth,
   );
 
-  // Ajuste del tiempo para el desplazamiento
-  let t = uniforms.time as f32 * 0.02; // Controla la velocidad del movimiento
-  let pulsate = (t * 0.3).sin() * 0.3; // Movimiento suave para simular el flujo de la textura
+  let t = uniforms.time as f32 * 0.02; 
+  let pulsate = (t * 0.3).sin() * 0.3; 
 
-  // Ajuste de ruido para generar la textura con movimiento
-  let zoom = 500.0; // Ajuste del zoom para un detalle más fino
+  let zoom = 500.0; 
   let noise_value1 = uniforms.noise.get_noise_3d(
       (position.x + pulsate) * zoom,
       (position.y + pulsate) * zoom,
-      position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
+      position.z * zoom + t, 
   );
   let noise_value2 = uniforms.noise.get_noise_3d(
       (position.x - pulsate) * zoom,
       (position.y - pulsate) * zoom,
-      position.z * zoom - t, // Desplazamiento en el tiempo para el movimiento
+      position.z * zoom - t, 
   );
-  let noise_value = (noise_value1 + noise_value2) * 0.5; // Promediar el ruido para un efecto más uniforme
+  let noise_value = (noise_value1 + noise_value2) * 0.5; 
 
-  // Crear un gradiente para simular el desvanecimiento de la textura
-  let gradient = (1.0 - position.y.abs()).clamp(0.0, 1.0); // Mayor densidad en el centro, desvaneciéndose hacia los bordes
+  let gradient = (1.0 - position.y.abs()).clamp(0.0, 1.0); 
 
-  // Definir los umbrales para las tonalidades de azul
   let threshold_1 = -0.2;
   let threshold_2 = 0.0;
   let threshold_3 = 0.2;
   let threshold_4 = 0.4;
 
-  // Asignar colores basados en el valor de ruido
   let base_color = if noise_value > threshold_4 {
       color_1
   } else if noise_value > threshold_3 {
@@ -471,11 +457,44 @@ fn clay_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
       color_5
   };
 
-  // Mezclar el color de la textura con el gradiente para simular el desvanecimiento
   let final_color = base_color
-      .lerp(&color_5, 1.0 - gradient) // Desvanece hacia un azul más oscuro en los bordes
+      .lerp(&color_5, 1.0 - gradient) 
       * fragment.intensity;
 
   final_color
 }
 
+fn neon_wave_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  let color_1 = Color::new(255, 20, 147);  
+  let color_2 = Color::new(0, 191, 255);   
+  let color_3 = Color::new(50, 205, 50);   
+  let color_4 = Color::new(255, 255, 0);   
+  let color_5 = Color::new(75, 0, 130);    
+
+  let position = fragment.vertex_position;
+
+  let t = uniforms.time as f32 * 0.04; 
+  let wave_movement = (position.x * 10.0 + position.y * 10.0 + t).sin(); 
+
+  let zoom = 10.0; 
+  let wave_value = ((position.x * zoom) + wave_movement).sin(); 
+
+  let threshold_1 = -0.8;
+  let threshold_2 = -0.4;
+  let threshold_3 = 0.0;
+  let threshold_4 = 0.4;
+
+  let base_color = if wave_value < threshold_1 {
+      color_1
+  } else if wave_value < threshold_2 {
+      color_2
+  } else if wave_value < threshold_3 {
+      color_3
+  } else if wave_value < threshold_4 {
+      color_4
+  } else {
+      color_5
+  };
+
+  base_color * fragment.intensity
+}

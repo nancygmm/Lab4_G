@@ -215,6 +215,9 @@ fn handle_input(window: &Window, camera: &mut Camera, current_shader: &mut u8) {
     let zoom_speed = 0.1;
 
     // Cambiar shader con teclas numéricas
+    if window.is_key_down(Key::Key0) {
+        *current_shader = 0;
+    }
     if window.is_key_down(Key::Key1) {
         *current_shader = 1;
     }
