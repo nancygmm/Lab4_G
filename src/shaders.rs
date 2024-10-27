@@ -46,23 +46,23 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
 
 pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, current_shader: u8) -> Color {
   match current_shader {
-      0 => neon_wave_shader(fragment, uniforms),
-      1 => black_and_white(fragment, uniforms),
-      2 => dalmata_shader(fragment, uniforms),
-      3 => cloud_shader(fragment, uniforms),
-      4 => cellular_shader(fragment, uniforms),
-      5 => lava_shader(fragment, uniforms),
-      6 => solar_shader(fragment, uniforms),
-      7 => rock_shader(fragment, uniforms),
-      8 => rainforest_shader(fragment, uniforms),
-      9 => clay_shader(fragment, uniforms),
-      _ => lava_shader(fragment, uniforms),
+      0 => planeta_neon(fragment, uniforms),
+      1 => planeta_raro(fragment, uniforms),
+      2 => planeta_saturno(fragment, uniforms),
+      3 => planeta_azul(fragment, uniforms),
+      4 => planeta_celular(fragment, uniforms),
+      5 => planeta_mancha(fragment, uniforms),
+      6 => sol(fragment, uniforms),
+      7 => planeta_rocoso(fragment, uniforms),
+      8 => planeta_gaseoso(fragment, uniforms),
+      9 => planeta_arcilla(fragment, uniforms),
+      _ => planeta_mancha(fragment, uniforms),
   }
 }
 
 
 
-fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_raro(fragment: &Fragment, uniforms: &Uniforms) -> Color {
     let color_1 = Color::new(255, 0, 255); 
     let color_2 = Color::new(0, 255, 255); 
     let color_3 = Color::new(0, 255, 127);
@@ -103,7 +103,7 @@ fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
     base_color * fragment.intensity
 }
   
-fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_saturno(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let color_1 = Color::new(255, 204, 102); 
   let color_2 = Color::new(255, 153, 51);  
   let color_3 = Color::new(204, 102, 0);  
@@ -138,7 +138,7 @@ fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   base_color * fragment.intensity
 }
   
-fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_azul(fragment: &Fragment, uniforms: &Uniforms) -> Color {
     let color_1 = Color::new(173, 216, 230); 
     let color_2 = Color::new(135, 206, 250);
     let color_3 = Color::new(0, 191, 255); 
@@ -187,7 +187,7 @@ fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
     base_color * fragment.intensity
 }
   
-fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_celular(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let ring_color_1 = Color::new(85, 107, 47);   
   let ring_color_2 = Color::new(124, 252, 0);  
   let ring_color_3 = Color::new(34, 139, 34);   
@@ -223,7 +223,7 @@ fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
   
-fn lava_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_mancha(fragment: &Fragment, uniforms: &Uniforms) -> Color {
     let spot_color = Color::new(139, 69, 19);  
     let rock_base_color = Color::new(210, 105, 30); 
     let highlight_color = Color::new(255, 140, 0); 
@@ -273,7 +273,7 @@ fn lava_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 
-fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn sol(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let core_color = Color::new(255, 255, 200);  
   let mid_color = Color::new(255, 223, 0);    
   let corona_color = Color::new(255, 140, 0);  
@@ -310,7 +310,7 @@ fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   blended_color * fragment.intensity
 }
 
-fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_rocoso(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let color_1 = Color::new(245, 222, 179);  
   let color_2 = Color::new(222, 184, 135);  
   let color_3 = Color::new(210, 180, 140);  
@@ -373,7 +373,7 @@ fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 
-fn rainforest_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_gaseoso(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let cloud_color = Color::new(255, 255, 255);  
   let fog_color = Color::new(120, 120, 120);   
 
@@ -409,7 +409,7 @@ fn rainforest_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 
-fn clay_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_arcilla(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let color_1 = Color::new(173, 216, 230); 
   let color_2 = Color::new(135, 206, 250);
   let color_3 = Color::new(70, 130, 180);  
@@ -464,7 +464,7 @@ fn clay_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   final_color
 }
 
-fn neon_wave_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+fn planeta_neon(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   let color_1 = Color::new(255, 20, 147);  
   let color_2 = Color::new(0, 191, 255);   
   let color_3 = Color::new(50, 205, 50);   
