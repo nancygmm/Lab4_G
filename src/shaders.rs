@@ -240,14 +240,15 @@ fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   blended_color * fragment.intensity
 }
 
-
 fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // Colores base para la textura rocosa
-  let color_1 = Color::new(220, 220, 200); // Color claro para las partes más elevadas
-  let color_2 = Color::new(180, 180, 160); // Color para áreas ligeramente elevadas
-  let color_3 = Color::new(140, 140, 120); // Color intermedio para bordes
-  let color_4 = Color::new(100, 100, 90);  // Color oscuro para áreas más bajas
-  let color_5 = Color::new(60, 60, 50);    // Color muy oscuro para grietas profundas
+  // Colores base para la textura rocosa con más tonalidades de gris
+  let color_1 = Color::new(220, 220, 220); // Gris muy claro
+  let color_2 = Color::new(190, 190, 190); // Gris claro
+  let color_3 = Color::new(160, 160, 160); // Gris medio-claro
+  let color_4 = Color::new(130, 130, 130); // Gris medio
+  let color_5 = Color::new(100, 100, 100); // Gris medio-oscuro
+  let color_6 = Color::new(70, 70, 70);    // Gris oscuro
+  let color_7 = Color::new(40, 40, 40);    // Gris muy oscuro
 
   // Obtener la posición del fragmento
   let position = Vec3::new(
@@ -258,33 +259,45 @@ fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 
   // Ajuste del tiempo para el desplazamiento
   let t = uniforms.time as f32 * 0.01; // Controla la velocidad del movimiento
-  let pulsate = (t * 0.2).sin() * 0.3; // Movimiento suave similar al lava_shader
+  let pulsate = (t * 0.5).sin() * 0.1; // Movimiento suave para simular el flujo
 
   // Ajuste de ruido para generar la textura rocosa con movimiento
-  let zoom = 500.0; // Aumentar el zoom para más rocas pequeñas
-  let noise_value = uniforms.noise.get_noise_3d(
+  let zoom = 1000.0; // Aumentar el zoom para obtener más detalles y muchas piedras pequeñas
+  let noise_value1 = uniforms.noise.get_noise_3d(
       (position.x + pulsate) * zoom,
       (position.y + pulsate) * zoom,
       position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
   );
+  let noise_value2 = uniforms.noise.get_noise_3d(
+      (position.x + 1000.0 + pulsate) * zoom,
+      (position.y + 1000.0 + pulsate) * zoom,
+      position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
+  );
+  let noise_value = (noise_value1 + noise_value2) * 0.5;  // Promediar el ruido para transiciones suaves
 
   // Umbrales para definir las áreas de "piedras" y "grietas"
-  let stone_threshold_1 = 0.1;
-  let stone_threshold_2 = 0.3;
-  let stone_threshold_3 = 0.5;
-  let stone_threshold_4 = 0.7;
+  let stone_threshold_1 = -0.4;
+  let stone_threshold_2 = -0.2;
+  let stone_threshold_3 = 0.0;
+  let stone_threshold_4 = 0.2;
+  let stone_threshold_5 = 0.4;
+  let stone_threshold_6 = 0.6;
 
   // Determinación del color basado en el valor de ruido
-  let base_color = if noise_value > stone_threshold_4 {
+  let base_color = if noise_value > stone_threshold_6 {
       color_1
-  } else if noise_value > stone_threshold_3 {
+  } else if noise_value > stone_threshold_5 {
       color_2
-  } else if noise_value > stone_threshold_2 {
+  } else if noise_value > stone_threshold_4 {
       color_3
-  } else if noise_value > stone_threshold_1 {
+  } else if noise_value > stone_threshold_3 {
       color_4
-  } else {
+  } else if noise_value > stone_threshold_2 {
       color_5
+  } else if noise_value > stone_threshold_1 {
+      color_6
+  } else {
+      color_7
   };
 
   // Simulación de relieve usando la normal del fragmento y una dirección de luz
