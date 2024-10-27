@@ -241,14 +241,14 @@ fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  // Colores base para la textura rocosa con más tonalidades de gris
-  let color_1 = Color::new(220, 220, 220); // Gris muy claro
-  let color_2 = Color::new(190, 190, 190); // Gris claro
-  let color_3 = Color::new(160, 160, 160); // Gris medio-claro
-  let color_4 = Color::new(130, 130, 130); // Gris medio
-  let color_5 = Color::new(100, 100, 100); // Gris medio-oscuro
-  let color_6 = Color::new(70, 70, 70);    // Gris oscuro
-  let color_7 = Color::new(40, 40, 40);    // Gris muy oscuro
+  // Colores base para la textura rocosa con tonalidades beige
+  let color_1 = Color::new(245, 222, 179); // Beige muy claro (blanco arena)
+  let color_2 = Color::new(222, 184, 135); // Beige claro (arena)
+  let color_3 = Color::new(210, 180, 140); // Beige medio-claro (arena clara)
+  let color_4 = Color::new(188, 143, 143); // Beige medio (rosado suave)
+  let color_5 = Color::new(205, 133, 63);  // Beige medio-oscuro (tierra clara)
+  let color_6 = Color::new(139, 69, 19);   // Marrón claro (madera)
+  let color_7 = Color::new(160, 82, 45);   // Marrón rojizo (tierra más oscura)
 
   // Obtener la posición del fragmento
   let position = Vec3::new(
