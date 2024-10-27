@@ -52,10 +52,10 @@ pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, current_shader:
       4 => cellular_shader(fragment, uniforms),
       5 => lava_shader(fragment, uniforms),
       6 => solar_shader(fragment, uniforms),
+      7 => rock_shader(fragment, uniforms),
       _ => lava_shader(fragment, uniforms), // Shader por defecto
   }
 }
-
 
 
 fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
@@ -238,4 +238,61 @@ fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 
   // Ajustar la intensidad para simular efectos de iluminación
   blended_color * fragment.intensity
+}
+
+
+fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Colores base para la textura rocosa
+  let color_1 = Color::new(220, 220, 200); // Color claro para las partes más elevadas
+  let color_2 = Color::new(180, 180, 160); // Color para áreas ligeramente elevadas
+  let color_3 = Color::new(140, 140, 120); // Color intermedio para bordes
+  let color_4 = Color::new(100, 100, 90);  // Color oscuro para áreas más bajas
+  let color_5 = Color::new(60, 60, 50);    // Color muy oscuro para grietas profundas
+
+  // Obtener la posición del fragmento
+  let position = Vec3::new(
+      fragment.vertex_position.x,
+      fragment.vertex_position.y,
+      fragment.depth,
+  );
+
+  // Ajuste del tiempo para el desplazamiento
+  let t = uniforms.time as f32 * 0.01; // Controla la velocidad del movimiento
+  let pulsate = (t * 0.2).sin() * 0.3; // Movimiento suave similar al lava_shader
+
+  // Ajuste de ruido para generar la textura rocosa con movimiento
+  let zoom = 500.0; // Aumentar el zoom para más rocas pequeñas
+  let noise_value = uniforms.noise.get_noise_3d(
+      (position.x + pulsate) * zoom,
+      (position.y + pulsate) * zoom,
+      position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
+  );
+
+  // Umbrales para definir las áreas de "piedras" y "grietas"
+  let stone_threshold_1 = 0.1;
+  let stone_threshold_2 = 0.3;
+  let stone_threshold_3 = 0.5;
+  let stone_threshold_4 = 0.7;
+
+  // Determinación del color basado en el valor de ruido
+  let base_color = if noise_value > stone_threshold_4 {
+      color_1
+  } else if noise_value > stone_threshold_3 {
+      color_2
+  } else if noise_value > stone_threshold_2 {
+      color_3
+  } else if noise_value > stone_threshold_1 {
+      color_4
+  } else {
+      color_5
+  };
+
+  // Simulación de relieve usando la normal del fragmento y una dirección de luz
+  let light_dir = Vec3::new(1.0, 1.0, 0.5).normalize(); // Dirección de la luz ajustada para mayor contraste
+  let diffuse_intensity = dot(&light_dir, &fragment.normal).max(0.0);
+
+  // Ajuste de color basado en la intensidad difusa para dar efecto de relieve
+  let final_color = base_color * (0.6 + 0.4 * diffuse_intensity);
+
+  final_color * fragment.intensity
 }

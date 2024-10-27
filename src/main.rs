@@ -213,26 +213,29 @@ fn handle_input(window: &Window, camera: &mut Camera, current_shader: &mut u8) {
     let movement_speed = 1.0;
     let rotation_speed = PI / 50.0;
     let zoom_speed = 0.1;
-    
-        // Cambiar shader con teclas numéricas
-        if window.is_key_down(Key::Key1) {
-            *current_shader = 1;
-        }
-        if window.is_key_down(Key::Key2) {
-            *current_shader = 2;
-        }
-        if window.is_key_down(Key::Key3) {
-            *current_shader = 3;
-        }
-        if window.is_key_down(Key::Key4) {
-            *current_shader = 4;
-        }
-        if window.is_key_down(Key::Key5) {
-            *current_shader = 5;
-        }
-        if window.is_key_down(Key::Key6) {
-            *current_shader = 6;
-        }
+
+    // Cambiar shader con teclas numéricas
+    if window.is_key_down(Key::Key1) {
+        *current_shader = 1;
+    }
+    if window.is_key_down(Key::Key2) {
+        *current_shader = 2;
+    }
+    if window.is_key_down(Key::Key3) {
+        *current_shader = 3;
+    }
+    if window.is_key_down(Key::Key4) {
+        *current_shader = 4;
+    }
+    if window.is_key_down(Key::Key5) {
+        *current_shader = 5;
+    }
+    if window.is_key_down(Key::Key6) {
+        *current_shader = 6;
+    }
+    if window.is_key_down(Key::Key7) {
+        *current_shader = 7;
+    }
 
    
     //  camera orbit controls
