@@ -100,15 +100,13 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
     )
 }
 
-fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex]) {
-    // Vertex Shader
+fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex], current_shader: u8) {
     let mut transformed_vertices = Vec::with_capacity(vertex_array.len());
     for vertex in vertex_array {
         let transformed = vertex_shader(vertex, uniforms);
         transformed_vertices.push(transformed);
     }
 
-    // Primitive Assembly
     let mut triangles = Vec::new();
     for i in (0..transformed_vertices.len()).step_by(3) {
         if i + 2 < transformed_vertices.len() {
@@ -120,25 +118,24 @@ fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Ve
         }
     }
 
-    // Rasterization
     let mut fragments = Vec::new();
     for tri in &triangles {
         fragments.extend(triangle(&tri[0], &tri[1], &tri[2]));
     }
 
-    // Fragment Processing
     for fragment in fragments {
         let x = fragment.position.x as usize;
         let y = fragment.position.y as usize;
 
         if x < framebuffer.width && y < framebuffer.height {
-            let shaded_color = fragment_shader(&fragment, &uniforms);
+            let shaded_color = fragment_shader(&fragment, uniforms, current_shader);
             let color = shaded_color.to_hex();
             framebuffer.set_current_color(color);
             framebuffer.point(x, y, fragment.depth);
         }
     }
 }
+
 
 fn main() {
     let window_width = 800;
@@ -161,21 +158,21 @@ fn main() {
 
     framebuffer.set_background_color(0x333355);
 
-    // model position
     let translation = Vec3::new(0.0, 0.0, 0.0);
     let rotation = Vec3::new(0.0, 0.0, 0.0);
     let scale = 1.0f32;
 
-    // camera parameters
     let mut camera = Camera::new(
         Vec3::new(0.0, 0.0, 5.0),
         Vec3::new(0.0, 0.0, 0.0),
-        Vec3::new(0.0, 1.0, 0.0)
+        Vec3::new(0.0, 1.0, 0.0),
     );
 
     let obj = Obj::load("assets/models/sphere.obj").expect("Failed to load obj");
     let vertex_arrays = obj.get_vertex_array(); 
     let mut time = 0;
+
+    let mut current_shader = 1; // Inicia con el shader 1 por defecto
 
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
@@ -183,8 +180,7 @@ fn main() {
         }
 
         time += 1;
-
-        handle_input(&window, &mut camera);
+        handle_input(&window, &mut camera, &mut current_shader);
 
         framebuffer.clear();
 
@@ -202,9 +198,8 @@ fn main() {
             noise
         };
 
-
         framebuffer.set_current_color(0xFFDDDD);
-        render(&mut framebuffer, &uniforms, &vertex_arrays);
+        render(&mut framebuffer, &uniforms, &vertex_arrays, current_shader);
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
@@ -214,10 +209,31 @@ fn main() {
     }
 }
 
-fn handle_input(window: &Window, camera: &mut Camera) {
+fn handle_input(window: &Window, camera: &mut Camera, current_shader: &mut u8) {
     let movement_speed = 1.0;
-    let rotation_speed = PI/50.0;
+    let rotation_speed = PI / 50.0;
     let zoom_speed = 0.1;
+    
+        // Cambiar shader con teclas numéricas
+        if window.is_key_down(Key::Key1) {
+            *current_shader = 1;
+        }
+        if window.is_key_down(Key::Key2) {
+            *current_shader = 2;
+        }
+        if window.is_key_down(Key::Key3) {
+            *current_shader = 3;
+        }
+        if window.is_key_down(Key::Key4) {
+            *current_shader = 4;
+        }
+        if window.is_key_down(Key::Key5) {
+            *current_shader = 5;
+        }
+        if window.is_key_down(Key::Key6) {
+            *current_shader = 6;
+        }
+
    
     //  camera orbit controls
     if window.is_key_down(Key::Left) {

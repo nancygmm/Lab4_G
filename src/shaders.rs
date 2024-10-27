@@ -44,13 +44,19 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
     }
 }
 
-pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    black_and_white(fragment, uniforms)
-    // dalmata_shader(fragment, uniforms)
-    // cloud_shader(fragment, uniforms)
-    // cellular_shader(fragment, uniforms)
-    // lava_shader(fragment, uniforms)
+pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, current_shader: u8) -> Color {
+  match current_shader {
+      1 => black_and_white(fragment, uniforms),
+      2 => dalmata_shader(fragment, uniforms),
+      3 => cloud_shader(fragment, uniforms),
+      4 => cellular_shader(fragment, uniforms),
+      5 => lava_shader(fragment, uniforms),
+      6 => solar_shader(fragment, uniforms),
+      _ => lava_shader(fragment, uniforms), // Shader por defecto
+  }
 }
+
+
 
 fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
     let seed = uniforms.time as f32 * fragment.vertex_position.y * fragment.vertex_position.x;
@@ -187,4 +193,49 @@ fn lava_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
     let color = dark_color.lerp(&bright_color, noise_value);
   
     color * fragment.intensity
+}
+
+
+fn solar_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Colores base para el efecto solar
+  let core_color = Color::new(255, 255, 200); // Amarillo muy claro (casi blanco)
+  let mid_color = Color::new(255, 223, 0);   // Amarillo dorado (más cercano al núcleo)
+  let corona_color = Color::new(255, 140, 0); // Naranja suave para la corona externa
+
+  // Obtener la posición del fragmento
+  let position = Vec3::new(
+      fragment.vertex_position.x,
+      fragment.vertex_position.y,
+      fragment.depth,
+  );
+
+  // Frecuencia y amplitud base para el efecto de pulsación
+  let base_frequency = 0.5; // Frecuencia ajustada para un movimiento más dinámico
+  let pulsate_amplitude = 0.6; // Amplitud ajustada para un efecto de movimiento más notable
+  let t = uniforms.time as f32 * 0.02; // Velocidad de la animación incrementada
+
+  // Efecto de pulsación para variar el ruido a lo largo del tiempo
+  let pulsate = (t * base_frequency).sin() * pulsate_amplitude;
+
+  // Aplicar ruido a las coordenadas con una pulsación más visible
+  let zoom = 1000.0; // Conservamos el zoom del diseño original para mantener el detalle fino
+  let noise_value1 = uniforms.noise.get_noise_3d(
+      position.x * zoom,
+      position.y * zoom,
+      (position.z + pulsate) * zoom,
+  );
+  let noise_value2 = uniforms.noise.get_noise_3d(
+      (position.x + 1000.0) * zoom,
+      (position.y + 1000.0) * zoom,
+      (position.z + 1000.0 + pulsate) * zoom,
+  );
+  let noise_value = (noise_value1 + noise_value2) * 0.5;  // Promediar el ruido para transiciones suaves
+
+  // Interpolación de colores: del centro brillante al borde naranja suave
+  let blended_color = core_color
+      .lerp(&mid_color, noise_value.abs())
+      .lerp(&corona_color, (noise_value * 0.5 + 0.5).clamp(0.0, 1.0));
+
+  // Ajustar la intensidad para simular efectos de iluminación
+  blended_color * fragment.intensity
 }
