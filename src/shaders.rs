@@ -54,9 +54,11 @@ pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, current_shader:
       6 => solar_shader(fragment, uniforms),
       7 => rock_shader(fragment, uniforms),
       8 => rainforest_shader(fragment, uniforms),
+      9 => clay_shader(fragment, uniforms),
       _ => lava_shader(fragment, uniforms), // Shader por defecto si se selecciona un número no válido
   }
 }
+
 
 
 fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
@@ -352,4 +354,68 @@ fn rainforest_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 
   // Ajustar la intensidad para simular la transparencia de la niebla
   final_color * fragment.intensity
+}
+
+
+fn clay_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Colores base para la textura con tonalidades azules y celestes
+  let color_1 = Color::new(173, 216, 230); // Celeste muy claro
+  let color_2 = Color::new(135, 206, 250); // Azul cielo claro
+  let color_3 = Color::new(70, 130, 180);  // Azul intermedio (azul acero)
+  let color_4 = Color::new(30, 144, 255);  // Azul más intenso (azul denso)
+  let color_5 = Color::new(0, 105, 148);   // Azul oscuro
+
+  // Obtener la posición del fragmento
+  let position = Vec3::new(
+      fragment.vertex_position.x,
+      fragment.vertex_position.y,
+      fragment.depth,
+  );
+
+  // Ajuste del tiempo para el desplazamiento
+  let t = uniforms.time as f32 * 0.02; // Controla la velocidad del movimiento
+  let pulsate = (t * 0.3).sin() * 0.3; // Movimiento suave para simular el flujo de la textura
+
+  // Ajuste de ruido para generar la textura con movimiento
+  let zoom = 500.0; // Ajuste del zoom para un detalle más fino
+  let noise_value1 = uniforms.noise.get_noise_3d(
+      (position.x + pulsate) * zoom,
+      (position.y + pulsate) * zoom,
+      position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
+  );
+  let noise_value2 = uniforms.noise.get_noise_3d(
+      (position.x - pulsate) * zoom,
+      (position.y - pulsate) * zoom,
+      position.z * zoom - t, // Desplazamiento en el tiempo para el movimiento
+  );
+  let noise_value = (noise_value1 + noise_value2) * 0.5; // Promediar el ruido para un efecto más uniforme
+
+  // Crear un gradiente para simular el desvanecimiento de la textura
+  let gradient = (1.0 - position.y.abs()).clamp(0.0, 1.0); // Mayor densidad en el centro, desvaneciéndose hacia los bordes
+
+  // Definir los umbrales para las tonalidades de azul
+  let threshold_1 = -0.2;
+  let threshold_2 = 0.0;
+  let threshold_3 = 0.2;
+  let threshold_4 = 0.4;
+
+  // Asignar colores basados en el valor de ruido
+  let base_color = if noise_value > threshold_4 {
+      color_1
+  } else if noise_value > threshold_3 {
+      color_2
+  } else if noise_value > threshold_2 {
+      color_3
+  } else if noise_value > threshold_1 {
+      color_4
+  } else {
+      color_5
+  };
+
+  // Mezclar el color de la textura con el gradiente para simular el desvanecimiento
+  let final_color = base_color
+      .lerp(&color_5, 1.0 - gradient) // Desvanece hacia un azul más oscuro en los bordes
+      * fragment.intensity;
+
+  final_color
 }

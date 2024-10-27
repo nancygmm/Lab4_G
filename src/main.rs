@@ -239,6 +239,9 @@ fn handle_input(window: &Window, camera: &mut Camera, current_shader: &mut u8) {
     if window.is_key_down(Key::Key8) {
         *current_shader = 8;
     }
+    if window.is_key_down(Key::Key9) {
+        *current_shader = 9;
+    }
 
    
     //  camera orbit controls
