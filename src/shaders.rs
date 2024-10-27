@@ -53,7 +53,8 @@ pub fn fragment_shader(fragment: &Fragment, uniforms: &Uniforms, current_shader:
       5 => lava_shader(fragment, uniforms),
       6 => solar_shader(fragment, uniforms),
       7 => rock_shader(fragment, uniforms),
-      _ => lava_shader(fragment, uniforms), // Shader por defecto
+      8 => rainforest_shader(fragment, uniforms),
+      _ => lava_shader(fragment, uniforms), // Shader por defecto si se selecciona un número no válido
   }
 }
 
@@ -307,5 +308,48 @@ fn rock_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   // Ajuste de color basado en la intensidad difusa para dar efecto de relieve
   let final_color = base_color * (0.6 + 0.4 * diffuse_intensity);
 
+  final_color * fragment.intensity
+}
+
+
+fn rainforest_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
+  // Colores base para la textura de niebla o nubes densas
+  let cloud_color = Color::new(255, 255, 255); // Blanco brillante para las áreas densas
+  let fog_color = Color::new(120, 120, 120);   // Gris para las áreas más tenues
+
+  // Obtener la posición del fragmento
+  let position = Vec3::new(
+      fragment.vertex_position.x,
+      fragment.vertex_position.y,
+      fragment.depth,
+  );
+
+  // Ajuste del tiempo para el desplazamiento
+  let t = uniforms.time as f32 * 0.01; // Controla la velocidad del movimiento
+  let pulsate = (t * 0.3).sin() * 0.5; // Movimiento suave y sutil para simular el flujo de la niebla
+
+  // Ajuste de ruido para generar la textura de niebla con movimiento
+  let zoom = 200.0; // Ajuste del zoom para una textura de nubes más detallada
+  let noise_value1 = uniforms.noise.get_noise_3d(
+      (position.x + pulsate) * zoom,
+      (position.y + pulsate) * zoom,
+      position.z * zoom + t, // Desplazamiento en el tiempo para el movimiento
+  );
+  let noise_value2 = uniforms.noise.get_noise_3d(
+      (position.x - pulsate) * zoom,
+      (position.y - pulsate) * zoom,
+      position.z * zoom - t, // Desplazamiento en el tiempo para el movimiento
+  );
+  let noise_value = (noise_value1 + noise_value2) * 0.5; // Promediar el ruido para un efecto más suave
+
+  // Crear un gradiente para dar densidad a la textura de las nubes
+  let gradient = (1.0 - position.y.abs()).clamp(0.0, 1.0); // Mayor densidad en el centro, desvaneciéndose hacia los bordes
+
+  // Mezclar el color de la nube con el de la niebla usando el valor de ruido y el gradiente
+  let final_color = cloud_color
+      .lerp(&fog_color, noise_value.abs())
+      .lerp(&fog_color, 1.0 - gradient);
+
+  // Ajustar la intensidad para simular la transparencia de la niebla
   final_color * fragment.intensity
 }
