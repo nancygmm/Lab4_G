@@ -78,28 +78,45 @@ fn black_and_white(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
   
 fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    let zoom = 100.0;
-    let ox = 0.0;
-    let oy = 0.0;
-    let x = fragment.vertex_position.x;
-    let y = fragment.vertex_position.y;
-  
-    let noise_value = uniforms.noise.get_noise_2d(
-      (x + ox) * zoom,
-      (y + oy) * zoom,
-    );
-  
-    let spot_threshold = 0.5;
-    let spot_color = Color::new(255, 255, 255); // White
-    let base_color = Color::new(0, 0, 0); // Black
-  
-    let noise_color = if noise_value < spot_threshold {
-      spot_color
-    } else {
-      base_color
-    };
-  
-    noise_color * fragment.intensity
+    // Colores base para las bandas con tonalidades cálidas
+  let color_1 = Color::new(255, 204, 102); // Amarillo claro
+  let color_2 = Color::new(255, 153, 51);  // Naranja
+  let color_3 = Color::new(204, 102, 0);   // Naranja oscuro
+  let color_4 = Color::new(153, 76, 0);    // Marrón claro
+  let color_5 = Color::new(102, 51, 0);    // Marrón oscuro
+
+  // Obtener la posición del fragmento
+  let position = fragment.vertex_position;
+
+  // Ajuste del tiempo para el desplazamiento
+  let t = uniforms.time as f32 * 0.02; // Controla la velocidad del movimiento
+  let pulsate = (t * 0.5).sin() * 0.5; // Movimiento suave para las bandas
+
+  // Ajuste de la función para generar bandas horizontales
+  let zoom = 10.0; // Ajuste para controlar la cantidad de bandas
+  let bands_value = ((position.y * zoom) + pulsate).sin(); // Bandas a lo largo del eje *y*
+
+  // Definir diferentes umbrales para los colores de las bandas
+  let threshold_1 = -0.8;
+  let threshold_2 = -0.4;
+  let threshold_3 = 0.0;
+  let threshold_4 = 0.4;
+
+  // Asignar colores basados en el valor de las bandas
+  let base_color = if bands_value < threshold_1 {
+      color_1
+  } else if bands_value < threshold_2 {
+      color_2
+  } else if bands_value < threshold_3 {
+      color_3
+  } else if bands_value < threshold_4 {
+      color_4
+  } else {
+      color_5
+  };
+
+  // Ajustar la intensidad para simular efectos de iluminación
+  base_color * fragment.intensity
 }
   
 fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
@@ -128,35 +145,47 @@ fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
   
 fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    let zoom = 30.0;  // Zoom factor to adjust the scale of the cell pattern
-    let ox = 50.0;    // Offset x in the noise map
-    let oy = 50.0;    // Offset y in the noise map
-    let x = fragment.vertex_position.x;
-    let y = fragment.vertex_position.y;
-  
-    // Use a cellular noise function to create the plant cell pattern
-    let cell_noise_value = uniforms.noise.get_noise_2d(x * zoom + ox, y * zoom + oy).abs();
-  
-    // Define different shades of green for the plant cells
-    let cell_color_1 = Color::new(85, 107, 47);   // Dark olive green
-    let cell_color_2 = Color::new(124, 252, 0);   // Light green
-    let cell_color_3 = Color::new(34, 139, 34);   // Forest green
-    let cell_color_4 = Color::new(173, 255, 47);  // Yellow green
-  
-    // Use the noise value to assign a different color to each cell
-    let final_color = if cell_noise_value < 0.15 {
-      cell_color_1
-    } else if cell_noise_value < 0.7 {
-      cell_color_2
-    } else if cell_noise_value < 0.75 {
-      cell_color_3
-    } else {
-      cell_color_4
-    };
-  
-    // Adjust intensity to simulate lighting effects (optional)
-    final_color * fragment.intensity
+  // Colores base para los anillos
+  let ring_color_1 = Color::new(85, 107, 47);   // Verde oliva oscuro
+  let ring_color_2 = Color::new(124, 252, 0);   // Verde claro
+  let ring_color_3 = Color::new(34, 139, 34);   // Verde bosque
+  let ring_color_4 = Color::new(173, 255, 47);  // Verde amarillento
+
+  // Obtener la posición del fragmento
+  let position = fragment.vertex_position;
+
+  // Ajuste del tiempo para el desplazamiento
+  let t = uniforms.time as f32 * 0.03; // Incrementar el tiempo para un movimiento más rápido
+  let pulsate = (t * 0.5).sin() * 0.2; // Movimiento más notable
+
+  // Ajuste de ruido para generar los anillos en el eje deseado con más cantidad
+  let zoom = 600.0; // Mayor zoom para generar más anillos en el área
+  let noise_value = uniforms.noise.get_noise_2d(
+      (position.x + pulsate) * zoom, // Cambiar el eje a *x* para alinear los anillos en el eje x
+      position.z * zoom + t,         // Usar *z* para el movimiento y variación en el otro eje
+  ).abs();
+
+  // Definir diferentes umbrales para los colores de los anillos
+  let ring_threshold_1 = 0.1;
+  let ring_threshold_2 = 0.3;
+  let ring_threshold_3 = 0.5;
+  let ring_threshold_4 = 0.7;
+
+  // Determinación del color basado en el valor de ruido
+  let ring_color = if noise_value < ring_threshold_1 {
+      ring_color_1
+  } else if noise_value < ring_threshold_2 {
+      ring_color_2
+  } else if noise_value < ring_threshold_3 {
+      ring_color_3
+  } else {
+      ring_color_4
+  };
+
+  // Ajustar la intensidad para simular efectos de iluminación y variaciones
+  ring_color * fragment.intensity
 }
+
   
 fn lava_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
     // Base colors for the lava effect
@@ -419,3 +448,4 @@ fn clay_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 
   final_color
 }
+
