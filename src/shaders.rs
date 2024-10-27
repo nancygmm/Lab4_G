@@ -120,28 +120,58 @@ fn dalmata_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
   
 fn cloud_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    let zoom = 100.0;  // to move our values 
-    let ox = 100.0; // offset x in the noise map
-    let oy = 100.0;
-    let x = fragment.vertex_position.x;
-    let y = fragment.vertex_position.y;
-    let t = uniforms.time as f32 * 0.5;
-  
-    let noise_value = uniforms.noise.get_noise_2d(x * zoom + ox + t, y * zoom + oy);
-  
-    // Define cloud threshold and colors
-    let cloud_threshold = 0.5; // Adjust this value to change cloud density
-    let cloud_color = Color::new(255, 255, 255); // White for clouds
-    let sky_color = Color::new(30, 97, 145); // Sky blue
-  
-    // Determine if the pixel is part of a cloud or sky
-    let noise_color = if noise_value > cloud_threshold {
-      cloud_color
+    // Colores base para las bandas con tonalidades de azul, aqua y celeste
+    let color_1 = Color::new(173, 216, 230); // Azul cielo claro
+    let color_2 = Color::new(135, 206, 250); // Azul cielo
+    let color_3 = Color::new(0, 191, 255);   // Azul profundo
+    let color_4 = Color::new(64, 224, 208);  // Turquesa
+    let color_5 = Color::new(0, 206, 209);   // Aqua oscuro
+    let color_6 = Color::new(70, 130, 180);  // Azul acero
+    let color_7 = Color::new(0, 105, 148);   // Azul océano
+    let color_8 = Color::new(25, 25, 112);   // Azul medianoche
+
+    // Obtener la posición del fragmento
+    let position = fragment.vertex_position;
+
+    // Ajuste del tiempo para el desplazamiento
+    let t = uniforms.time as f32 * 0.02; // Controla la velocidad del movimiento
+    let pulsate = (t * 0.5).sin() * 0.5; // Movimiento suave para las bandas
+
+    // Ajuste de la función para generar bandas horizontales
+    let zoom = 15.0; // Ajuste para controlar la cantidad de bandas
+    let bands_value = ((position.y * zoom) + pulsate).sin(); // Bandas a lo largo del eje *y*
+
+    // Definir diferentes umbrales para los colores de las bandas
+    let threshold_1 = -0.8;
+    let threshold_2 = -0.6;
+    let threshold_3 = -0.4;
+    let threshold_4 = -0.2;
+    let threshold_5 = 0.0;
+    let threshold_6 = 0.2;
+    let threshold_7 = 0.4;
+    let threshold_8 = 0.6;
+
+    // Asignar colores basados en el valor de las bandas
+    let base_color = if bands_value < threshold_1 {
+        color_1
+    } else if bands_value < threshold_2 {
+        color_2
+    } else if bands_value < threshold_3 {
+        color_3
+    } else if bands_value < threshold_4 {
+        color_4
+    } else if bands_value < threshold_5 {
+        color_5
+    } else if bands_value < threshold_6 {
+        color_6
+    } else if bands_value < threshold_7 {
+        color_7
     } else {
-      sky_color
+        color_8
     };
-  
-    noise_color * fragment.intensity
+
+    // Ajustar la intensidad para simular efectos de iluminación
+    base_color * fragment.intensity
 }
   
 fn cellular_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
