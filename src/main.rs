@@ -170,6 +170,8 @@ fn main() {
 
     let obj = Obj::load("assets/models/sphere.obj").expect("Failed to load obj");
     let vertex_arrays = obj.get_vertex_array(); 
+    let anillo = Obj::load("assets/models/anillo.obj").expect("Failed to load anillo obj");
+    let vertex_anillo = anillo.get_vertex_array();
     let mut time = 0;
 
     let mut current_shader = 1; // Inicia con el shader 1 por defecto
@@ -184,8 +186,11 @@ fn main() {
 
         framebuffer.clear();
 
-        let noise = create_noise();
+        let noise1 = create_noise();
+        let noise2 = create_noise();
+        
         let model_matrix = create_model_matrix(translation, scale, rotation);
+        let anillo_matrix = create_model_matrix(translation, scale, rotation);
         let view_matrix = create_view_matrix(camera.eye, camera.center, camera.up);
         let projection_matrix = create_perspective_matrix(window_width as f32, window_height as f32);
         let viewport_matrix = create_viewport_matrix(framebuffer_width as f32, framebuffer_height as f32);
@@ -195,11 +200,28 @@ fn main() {
             projection_matrix, 
             viewport_matrix,
             time,
-            noise
+            noise: noise1
+        };
+        let uniforms_anillo = Uniforms { 
+            model_matrix:anillo_matrix, 
+            view_matrix, 
+            projection_matrix, 
+            viewport_matrix,
+            time,
+            noise: noise2
         };
 
         framebuffer.set_current_color(0xFFDDDD);
-        render(&mut framebuffer, &uniforms, &vertex_arrays, current_shader);
+        let mut tecla = 0;
+        if window.is_key_down(Key::Key8) {
+            tecla = 8;
+        }
+        match tecla{
+            8 => {
+                render(&mut framebuffer, &uniforms, &vertex_arrays, current_shader); 
+                render(&mut framebuffer, &uniforms_anillo, &vertex_anillo, current_shader);},
+            _ => {render(&mut framebuffer, &uniforms, &vertex_arrays, current_shader);}
+        }
 
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
